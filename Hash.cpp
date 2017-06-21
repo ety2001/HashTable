@@ -1,5 +1,6 @@
 // Hash.cpp
 #include <iostream>
+#include <iomanip>
 #include "Hash.h"
 using namespace std;
 
@@ -18,12 +19,15 @@ int Hash::hashFun(int id) // simple hash function
 
 void Hash::rehash(){
   int newSize = tablesize*2;
-  StudentNode* newTable[] = new StudentNode* [newSize];
+  cout << "Rehash: expand table size from " << tablesize << " to " << newSize << endl;
+  StudentNode** newTable = new StudentNode* [newSize];
   for (int i = 0; i < newSize; i++){
     newTable[i] = NULL;
   }
   for(int i = 0; i < tablesize; i++){
-    for(StudentNode* node = table[i], StudentNode* next = NULL; node != NULL; node = next){
+
+    StudentNode *next = NULL;
+    for(StudentNode* node = table[i]; node != NULL; node = next){
       next = node->getNext();
       int newIndex = node->getId()%newSize;
       node->setNext(newTable[newIndex]);
@@ -35,15 +39,24 @@ void Hash::rehash(){
   table = newTable;
 }
 
-void Hash::insert(int id, char* first, char* last, float gpa)
+StudentNode* Hash::find(int id)
+{
+  int index = this->hashFun(id);
+  StudentNode *node;
+  for (node = table[index]; node != NULL && node->getId() != id; 
+       node = node->getNext());
+  return node;
+}
+
+void Hash::add(int id, char* first, char* last, float gpa)
 {
   StudentNode *node = new StudentNode(id, first, last, gpa);
   int index = hashFun(id);
   // insert the node to the head of the chain
-  node->next = table[index];
+  node->setNext(table[index]);
   table[index] = node;
   int collisions = 0;
-  for(node = table[index]; node != NULL, node = node-getNext()){
+  for(node = table[index]; node != NULL; node = node->getNext()){
     collisions++;
   }
   if(collisions > 3){
@@ -51,7 +64,7 @@ void Hash::insert(int id, char* first, char* last, float gpa)
   }
 }
 
-boolean Hash::delete(int id)
+bool Hash::del(int id)
 {
   int index = hashFun(id);
   StudentNode *node = table[index];
@@ -68,8 +81,8 @@ boolean Hash::delete(int id)
     if (prev == NULL)
       table[index] = node->getNext();
     else
-      prev->getNext() = node->getNext();
-    node->getNext() = NULL;
+      prev->setNext(node->getNext());
+    node->setNext(NULL);
     delete node;
     return true;
   }
@@ -77,8 +90,11 @@ boolean Hash::delete(int id)
 
 void Hash::print(){
   for(int i=0; i <tablesize; i++){
-    for(StudentNode* n = table[i]; n!=NULL; n=n->getNext()){
-      cout<<n->getId()<<": "<<n->getFirst()<<" "<<n->getLast()<<" "<<n->getGpa()<<endl;
+    if (table[i]) {
+      cout << i << ":" << endl;
+      for(StudentNode* n = table[i]; n!=NULL; n=n->getNext()){
+        cout<<"  (" << n->getId()<<" "<<n->getFirst()<<" "<<n->getLast()<<" "<< fixed << setprecision(2) << n->getGpa() << ") " <<endl;
+      }
     }
   }
 }
